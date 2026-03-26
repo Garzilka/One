@@ -6,6 +6,7 @@
 AGameplayCharacter::AGameplayCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	InteractManager = CreateDefaultSubobject<UBaseInteractManager>(TEXT("InteractManager"));
 }
 
 void AGameplayCharacter::BeginPlay()

@@ -13,6 +13,11 @@ class ONE_API AGameplayCharacter : public ACharacter
 	GENERATED_BODY()
 
 protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Components)
+	UBaseInteractManager* InteractManager;
+	
+protected:
 	virtual void BeginPlay() override;
 
 public:	

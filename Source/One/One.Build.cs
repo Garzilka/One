@@ -21,7 +21,7 @@ public class One : ModuleRules
 			"Slate"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "InteractSystem" });
 
 		PublicIncludePaths.AddRange(new string[] { });
 

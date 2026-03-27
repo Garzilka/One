@@ -16,6 +16,76 @@ void UBaseInteractManager::BeginPlay()
 
 #pragma endregion ENGINE
 
+#pragma region INPUT
+
+void UBaseInteractManager::InteractPressed()
+{
+	if (!GetCurrentInteractComponent() || !GetOwningPlayerCharacter()) return;
+
+	if (!GetCurrentInteractComponent()->CanInteractFor(GetOwningPlayerCharacter())) return;
+
+	OnBeginInteract.Broadcast(GetOwningPlayerCharacter(), GetCurrentInteractComponent());
+	BeginInteract();
+}
+
+bool UBaseInteractManager::BeginInteract()
+{
+	if (!GetWorld()) return false;
+	bool LResult = false;
+	if (!GetCurrentInteractComponent()) return false;
+
+	GetCurrentInteractComponent()->StartInteract(GetOwningPlayerCharacter());
+
+	if (GetCurrentInteractComponent() && GetCurrentInteractComponent()->HasInteractFlag(EInteractType::EIT_Press))
+	{
+		LResult = true;
+		EventInteract(GetCurrentInteractComponent(), EInteractType::EIT_Press);
+	}
+
+	if (GetCurrentInteractComponent() && (GetCurrentInteractComponent()->HasInteractFlag(EInteractType::EIT_Pressed) || GetCurrentInteractComponent()->HasInteractFlag(EInteractType::EIT_CirculPressed)))
+	{
+		LResult = true;
+		GetWorld()->GetTimerManager().SetTimer(Timer_InteractPressed, this, &UBaseInteractManager::PressedTimerInteract, GetCurrentInteractComponent()->GetTimeToInteract(), true);
+	}
+	return LResult;
+}
+
+void UBaseInteractManager::InteractReleased()
+{
+	if (!GetCurrentInteractComponent() || !GetOwningPlayerCharacter()) return;
+
+	if (!GetCurrentInteractComponent()->CanInteractFor(GetOwningPlayerCharacter())) return;
+
+	OnEndInteract.Broadcast(GetOwningPlayerCharacter(), GetCurrentInteractComponent());
+	EndInteract(GetCurrentInteractComponent());
+}
+
+void UBaseInteractManager::EndInteract(UBaseInteractComponent* InteractComponent)
+{
+	if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(Timer_InteractPressed))
+		GetWorld()->GetTimerManager().ClearTimer(Timer_InteractPressed);
+
+	if (InteractComponent && InteractComponent->HasInteractFlag(EInteractType::EIT_Release) && (InteractComponent->GetTimeToInteract() - 0.1f) >= 0.f)
+	{
+		EventInteract(InteractComponent, EInteractType::EIT_Release);
+	}
+	if (InteractComponent && InteractComponent->HasInteractFlag(EInteractType::EIT_Released))
+	{
+		if ((InteractComponent->GetTimeToInteract() - 0.1f) <= 0.f)
+			EventInteract(InteractComponent, EInteractType::EIT_Released);
+	}
+	if (InteractComponent)
+		InteractComponent->EndInteract(GetOwningPlayerCharacter());
+}
+
+void UBaseInteractManager::EventInteract(UBaseInteractComponent* InteractComponent, EInteractType InteractType)
+{
+	if (!InteractComponent) return;
+	OnInteracted.Broadcast(GetOwningPlayerCharacter(), InteractComponent, InteractType);
+	InteractComponent->Interact(GetOwningPlayerCharacter(), InteractType);
+}
+#pragma endregion INPUT
+
 #pragma region TRACE
 
 void UBaseInteractManager::PerformTrace()
@@ -118,14 +188,17 @@ void UBaseInteractManager::InteractionNone()
 	if (!GetCurrentInteractComponent()) return;
 	
 	//Потенциально у нас может смениться LastInteractComponent при вызове OnInteractFocusLost или EndInteract, поэтому тут кешируется тот компонент с которым надо закончить работу
-	UBaseInteractComponent* LFinishInteractComponent = GetCurrentInteractComponent();
+	UBaseInteractComponent* LLostInteractComponent = GetCurrentInteractComponent();
 	InteractManagerState.SetNewInteractComponent(nullptr);
 
 	if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(Timer_InteractPressed))
+	{
 		GetWorld()->GetTimerManager().ClearTimer(Timer_InteractPressed);
+	}
 
-	LFinishInteractComponent->EndInteract(GetOwningPlayerCharacter());
-	LFinishInteractComponent->EndFocus(GetOwningPlayerCharacter());
+	LLostInteractComponent->EndInteract(GetOwningPlayerCharacter());
+	LLostInteractComponent->EndFocus(GetOwningPlayerCharacter());
+	OnFocusLost.Broadcast(GetOwningPlayerCharacter(), LLostInteractComponent, LLostInteractComponent->GetOwner());
 }
 
 void UBaseInteractManager::NewInteraction(UBaseInteractComponent* InteractComponent)
@@ -135,6 +208,7 @@ void UBaseInteractManager::NewInteraction(UBaseInteractComponent* InteractCompon
 	
 	InteractionNone();
 	InteractManagerState.SetNewInteractComponent(InteractComponent);
+	OnBeginFocus.Broadcast(GetOwningPlayerCharacter(), InteractComponent, InteractComponent->GetOwner());
 	
 	if (!GetCurrentInteractComponent()) return;
 

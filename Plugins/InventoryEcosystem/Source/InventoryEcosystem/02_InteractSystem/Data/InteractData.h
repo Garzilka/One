@@ -25,6 +25,35 @@ enum class EInteractTypeTimeDegradation : uint8
 	EITTD_Reverse		UMETA(DisplayName = "Откат"),
 };
 
+
+/**
+* Вызывается когда объект попал в поле взаимодействия или вышел из него
+* Локально + Сервер
+* @Character - Кто взаимодйствует
+* @InteractComponent - Компонент взаимодействия
+*/
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractFocusSignature, class ACharacter*, CharacterInstigator, class UBaseInteractComponent*, InteractComponent, class AActor*, Actor);
+
+/**
+* Вызывается когда произошло взаимодействие
+* Локально + Сервер
+* @CharacterInstigator - Кто взаимодйствует
+* @InteractComponent - Компонент взаимодействия
+* @InteractType - Тип произошедшего взаимодействия
+*/
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractedSignature, class ACharacter*, CharacterInstigator, class UBaseInteractComponent*, InteractComponent, EInteractType, InteractType);
+
+/**
+* Вызывается в начале и в конце взаимодействия (Нажатие и отжатие кнопки взаимодействия)
+* Локально + Сервер
+* @CharacterInstigator - Кто взаимодйствует
+* @InteractComponent - Компонент взаимодействия
+*/
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractedChangeStateSignature, class ACharacter*, CharacterInstigator, class UBaseInteractComponent*, InteractComponent);
+
+
+
+
 USTRUCT(BlueprintType)
 struct FInteractDescription
 {
@@ -35,10 +64,13 @@ struct FInteractDescription
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FText ActionText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UInteractWidget> InteractWidget;
 };
 
 USTRUCT(BlueprintType)
-struct FBaseInteractSettings
+struct FInteractSettings
 {
 	GENERATED_BODY()
 
@@ -46,31 +78,15 @@ struct FBaseInteractSettings
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Bitmask, BitmaskEnum = "/Script/InteractSystem.EInteractType"))
 	int32 ActionMenu = (uint8)EInteractType::EIT_Release;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bIsViewInteractionTime", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float InteractionTime = 2.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bIsViewTypeTimeDegradation", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EInteractTypeTimeDegradation TypeTimeDegradation = EInteractTypeTimeDegradation::EITTD_Clear;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bIsViewSpeedOfRevers", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SpeedOfRevers = 1.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 0.f))
 	float InteractionDistance = 700.f;
-
-	UPROPERTY()
-	bool bIsViewSpeedOfRevers = false;
-
-	UPROPERTY()
-	bool bIsViewInteractionTime = false;
-
-	UPROPERTY()
-	bool bIsViewTypeTimeDegradation = false;
-
-	void RefreshView()
-	{
-		bIsViewInteractionTime = (ActionMenu & (uint8)EInteractType::EIT_Pressed || ActionMenu & (uint8)EInteractType::EIT_Released || ActionMenu & (uint8)EInteractType::EIT_CirculPressed);
-		bIsViewTypeTimeDegradation = (ActionMenu & (uint8)EInteractType::EIT_Pressed || ActionMenu & (uint8)EInteractType::EIT_Released || ActionMenu & (uint8)EInteractType::EIT_CirculPressed);
-		bIsViewSpeedOfRevers = (TypeTimeDegradation == EInteractTypeTimeDegradation::EITTD_Reverse);
-	}
 };

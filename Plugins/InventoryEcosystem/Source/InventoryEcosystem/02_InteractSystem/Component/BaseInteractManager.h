@@ -48,16 +48,29 @@ protected:
 
 };
 
-
-
 static TAutoConsoleVariable<bool> CDrawDebugInteractedLine(TEXT("IES.Interact.ShowInteractTrace"), false, TEXT("Enable draw debug interact"), ECVF_Cheat);
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
 class INTERACTSYSTEM_API UBaseInteractManager : public UBaseInventoryComponent
 {
 	GENERATED_BODY()
 
 
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Delegates")
+	FInteractFocusSignature OnBeginFocus;
+
+	UPROPERTY(BlueprintAssignable, Category = "Delegates")
+	FInteractFocusSignature OnFocusLost;
+
+	UPROPERTY(BlueprintAssignable, Category = "Delegates")
+	FInteractedSignature OnInteracted;
+
+	UPROPERTY(BlueprintAssignable, Category = "Delegates")
+	FInteractedChangeStateSignature OnBeginInteract;
+
+	UPROPERTY(BlueprintAssignable, Category = "Delegates")
+	FInteractedChangeStateSignature OnEndInteract;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Настройки|Менеджер взаимодействие|Базовые",
@@ -89,11 +102,35 @@ private:
 	UPROPERTY()
 	UCameraComponent* PlayerCameraComponent;
 public:	
+	
+	/** Функция предназначена для вызова по нажатию кнопки взаимодействия*/
+	UFUNCTION(BlueprintCallable, Category = "InteractSystem|InteractManager|Actions")
+	void InteractPressed();
+	
+	/** Функция предназначена для вызова по нажатию кнопки взаимодействия*/
+	UFUNCTION(BlueprintCallable, Category = "InteractSystem|InteractManager|Actions")
+	void InteractReleased();
+	
 	UFUNCTION(BlueprintPure)
 	UBaseInteractComponent* GetCurrentInteractComponent() const {	return InteractManagerState.GetCurrentInteractComponent();	};
 	
 protected:
 	virtual void BeginPlay() override;
+	
+	/*
+	* Вызывается при InteractPressed
+	* Вызовится если есть с чем взаимодействовать */
+	virtual bool BeginInteract();
+	/*
+	* Вызывается при InteractReleased
+	* Вызовится если есть с чем взаимодействовать */
+	virtual void EndInteract(UBaseInteractComponent* InteractComponent);
+	
+	/** Вызывается при успешном взаимодействии */
+	void PressedTimerInteract() {};
+	
+	/** Вызывается при успешном взаимодействии */
+	virtual void EventInteract(UBaseInteractComponent* InteractComponent, EInteractType InteractType);
 
 	UFUNCTION()
 	void PerformTrace();

@@ -9,33 +9,8 @@
 
 
 
-/**
-* Вызывается когда объект попал в поле взаимодействия или вышел из него
-* Локально + Сервер
-* @Character - Кто взаимодйствует
-* @InteractComponent - Компонент взаимодействия
-*/
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractFocusSignature, class ACharacter*, CharacterInstigator, class UBaseInteractComponent*, InteractComponent);
 
-/**
-* Вызывается когда произошло взаимодействие
-* Локально + Сервер
-* @CharacterInstigator - Кто взаимодйствует
-* @InteractComponent - Компонент взаимодействия
-* @InteractType - Тип произошедшего взаимодействия
-*/
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractedSignature, class ACharacter*, CharacterInstigator, class UBaseInteractComponent*, InteractComponent, EInteractType, InteractType);
-
-/**
-* Вызывается в начале и в конце взаимодействия (Нажатие и отжатие кнопки взаимодействия)
-* Локально + Сервер
-* @CharacterInstigator - Кто взаимодйствует
-* @InteractComponent - Компонент взаимодействия
-*/
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractedChangeStateSignature, class ACharacter*, CharacterInstigator, class UBaseInteractComponent*, InteractComponent);
-
-
-UCLASS()
+UCLASS(Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
 class INTERACTSYSTEM_API UBaseInteractComponent : public UBaseInventorySceneComponent
 {
 	GENERATED_BODY()
@@ -61,7 +36,7 @@ protected:
 	FInteractDescription Description;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FBaseInteractSettings InteractSettings;
+	FInteractSettings InteractSettings;
 
 	UPROPERTY()
 	float CurrentInteractTime = 0.f;
@@ -70,10 +45,11 @@ protected:
 	bool InInteract = false;
 
 public:
-	UBaseInteractComponent() {};
+	UBaseInteractComponent();
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintPure)
-	FBaseInteractSettings GetInteractSettings() const {return InteractSettings;};
+	FInteractSettings GetInteractSettings() const {return InteractSettings;};
 	
 	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
 	FText GetInteractableNameText() { return Description.NameText; }
@@ -98,17 +74,23 @@ public:
 	
 	/**	*/
 	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
-	bool HasInteractFlag(EInteractType Type);
+	bool HasInteractFlag(EInteractType Type) const;
 
 	/**	*/
 	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
-	bool CanInteractFor(ACharacter* CharacterInstigator);
+	bool CanInteractFor(ACharacter* CharacterInstigator) const;
 
 	/**/
 	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
-	bool CanBePressed();
+	bool CanBePressed() const;
 
 	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
 	bool IsOutLine(UPrimitiveComponent* Primitive);
+	
+	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
+	float GetTimeToInteract() const;
+	
+	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
+	float GetInteractPercent() const;
 	
 };

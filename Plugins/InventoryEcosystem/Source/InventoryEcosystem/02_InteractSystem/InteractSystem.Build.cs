@@ -40,6 +40,8 @@ public class InteractSystem : ModuleRules
 				"Slate",
 				"SlateCore",
                 "UMG",
+                "GameplayTags",
+                "DeveloperSettings",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

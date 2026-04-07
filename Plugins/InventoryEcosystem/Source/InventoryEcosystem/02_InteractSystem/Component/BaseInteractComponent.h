@@ -5,12 +5,13 @@
 #include "CoreMinimal.h"
 #include "InventoryEcosystem/01_Core/Component/BaseInventorySceneComponent.h"
 #include "InventoryEcosystem/02_InteractSystem/Data/InteractData.h"
+#include "InventoryEcosystem/02_InteractSystem/Objects/AnimationInteractRule.h"
 #include "BaseInteractComponent.generated.h"
 
 
 
 
-UCLASS(Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent), HideCategories = ("Component", "Sockets", "Collision", "AssetUserData", "Component Tick", "ComponentTick", "Component Replication", "ComponentReplication", "Cooking", "Activation", "Variable"))
 class INTERACTSYSTEM_API UBaseInteractComponent : public UBaseInventorySceneComponent
 {
 	GENERATED_BODY()
@@ -37,6 +38,12 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FInteractSettings InteractSettings;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Настройки ограничения угла"))
+	FInteractAngleSettings AngleSettings;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Настройки ограничения угла"))
+	UInteractAnimationComponent* InteractAnimationComponent;
 
 	UPROPERTY()
 	float CurrentInteractTime = 0.f;
@@ -92,5 +99,11 @@ public:
 	
 	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
 	float GetInteractPercent() const;
+	
+	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
+	UInteractAnimationComponent* GetInteractAnimationComponent() const { return InteractAnimationComponent;};
+
+protected:
+	virtual void BeginPlay() override;
 	
 };

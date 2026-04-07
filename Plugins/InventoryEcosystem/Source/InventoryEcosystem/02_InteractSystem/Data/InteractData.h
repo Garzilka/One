@@ -3,6 +3,30 @@
 #include "CoreMinimal.h"
 #include "InteractData.generated.h"
 
+UENUM(BlueprintType)
+enum class EInteractPositionType : uint8
+{
+	EIPT_None					UMETA(DisplayName = "Нет"),
+	EIPT_Point					UMETA(DisplayName = "Точка взаимодействия"),
+	EIPT_Radius					UMETA(DisplayName = "Радиус взаимодействия"),
+};
+
+UENUM(BlueprintType)
+enum class EInteractCallType : uint8
+{
+	EICT_BeforeInteractAnimation	UMETA(DisplayName = "До анимации взаимодействия"),
+	EICT_AfterInteractAnimation		UMETA(DisplayName = "После анимации взаимодействия"),
+	EICT_ByAnimNotify				UMETA(DisplayName = "По Notify"),
+};
+
+UENUM(BlueprintType)
+enum class ECharacterInteractState : uint8
+{
+	ECIS_None					UMETA(DisplayName = "None"),
+	ECIS_MovingToInteractPoint	UMETA(DisplayName = "Двигается до точки взаимодействия"),
+	ECIS_InteractState			UMETA(DisplayName = "Взаимодействует"),
+	ECIS_AwaitPlayerInput		UMETA(DisplayName = "Ожидает действий игрока"),
+};
 
 UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EInteractType : uint8
@@ -74,19 +98,49 @@ struct FInteractSettings
 {
 	GENERATED_BODY()
 
+	UPROPERTY(EditDefaultsOnly,	meta = (DisplayName = "Приоритет", ToolTip = "Чем больше цифра, тем больше приоритет"))
+	int32 Priority = 1;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Bitmask, BitmaskEnum = "/Script/InteractSystem.EInteractType"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Bitmask, BitmaskEnum = "/Script/InteractSystem.EInteractType", DisplayName = "Тип взаимодействия"))
 	int32 ActionMenu = (uint8)EInteractType::EIT_Release;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Время взаимодействия"))
 	float InteractionTime = 2.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Тип отката таймера"))
 	EInteractTypeTimeDegradation TypeTimeDegradation = EInteractTypeTimeDegradation::EITTD_Clear;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Множитель реверса"))
 	float SpeedOfRevers = 1.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 0.f))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 50.f, UIMin = 50.f, DisplayName = "Дистанция взаимодействия"))
 	float InteractionDistance = 700.f;
+
+	UPROPERTY(EditDefaultsOnly,  
+		meta = (DisplayName = "Взаимодействует только один", Tooltip = "Пока тот кто начал взаимодействовать не закончит, взаимодействовать с ним нельзя"))
+	bool bIsOnlyOneInteractor = false;
+
+	UPROPERTY(EditDefaultsOnly, meta = (EditCondition = "bIsOnlyOneInteractor", EditConditionHides,
+			DisplayName = "Другой может видеть виджет", ToolTip = "Если игрок выполняет действие, другой игрок может видеть прогресс"))
+	bool bIsAnotherCanSeeWidget = true;
+};
+
+USTRUCT(BlueprintType)
+struct FInteractAngleSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Проверка по углу"))
+	bool bWithAngleCheck = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Debug"))
+	bool bEnableDebug = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "bWithAngleCheck", EditConditionHides,
+		DisplayName = "Допустимый угол взаимодействия", ClampMin = 5.f, ClampMax = 360.f, UIMin = 5.f, UIMax = 360.f))
+	float InteractAngle = 360.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,  meta = (EditCondition = "bWithAngleCheck", EditConditionHides,
+		DisplayName = "Угол смещения", ClampMin = -180.f, ClampMax = 180.f, UIMin = -180.f, UIMax = 180.f))
+	float InteractAngleOffset = 0.f;
 };

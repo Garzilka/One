@@ -51,3 +51,17 @@ APlayerState* UInventoryCoreLibrary::GetPlayerState(APlayerController* Owner)
 	}
 	return nullptr;
 }
+
+bool UInventoryCoreLibrary::IsInGameView()
+{
+
+#if WITH_EDITOR
+	UEditorEngine* LocalEditor = GEditor;
+	if (LocalEditor && LocalEditor->GetActiveViewport() && GEditor->GetActiveViewport()->GetClient())
+	{
+		return GEditor->GetActiveViewport()->GetClient()->IsInGameView();
+	}
+#endif
+
+	return false;
+}

@@ -23,4 +23,6 @@ public:
 	static APlayerState* GetPlayerState(ACharacter* Owner);
 	static APlayerState* GetPlayerState(APlayerController* Owner);
 	
+	static bool IsInGameView();
+	
 };

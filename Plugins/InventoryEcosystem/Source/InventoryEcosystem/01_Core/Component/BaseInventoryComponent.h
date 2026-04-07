@@ -9,7 +9,7 @@
 #include "BaseInventoryComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(meta=(BlueprintSpawnableComponent))
 class INVENTORYCORE_API UBaseInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()

@@ -18,10 +18,14 @@ class INVENTORYCORE_API UInventoryCoreLibrary : public UBlueprintFunctionLibrary
 
 public:
 	static IObjectManagmentInterface* HasManagmentInterface(UObject* TargetObject);
-	
+
+	UFUNCTION(BlueprintPure, Category = "InventoryCoreLibrary")
 	static APlayerState* GetPlayerState(AActor* Owner);
 	static APlayerState* GetPlayerState(ACharacter* Owner);
 	static APlayerState* GetPlayerState(APlayerController* Owner);
+	
+	UFUNCTION(BlueprintPure, Category = "InventoryCoreLibrary")
+	static FString GetPlayerNickname(AActor* From);
 	
 	static bool IsInGameView();
 	

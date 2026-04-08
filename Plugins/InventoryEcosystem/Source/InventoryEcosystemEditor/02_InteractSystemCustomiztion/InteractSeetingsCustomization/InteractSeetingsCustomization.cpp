@@ -21,6 +21,9 @@ void FInteractSeetingsCustomization::CustomizeHeader(TSharedRef<IPropertyHandle>
 
 void FInteractSeetingsCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> StructPropertyHandle, IDetailChildrenBuilder& StructBuilder, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
+	PropertyHandle_Priority = StructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FInteractSettings, Priority));
+	PropertyHandle_bIsOnlyOneInteractor = StructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FInteractSettings, bIsOnlyOneInteractor));
+	PropertyHandle_bIsAnotherCanSeeWidget = StructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FInteractSettings, bIsAnotherCanSeeWidget));
 	PropertyHandle_ActionMenu = StructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FInteractSettings, ActionMenu));
 	PropertyHandle_InteractionTime = StructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FInteractSettings, InteractionTime));
 	PropertyHandle_TypeTimeDegradation = StructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FInteractSettings, TypeTimeDegradation));
@@ -38,6 +41,18 @@ void FInteractSeetingsCustomization::CustomizeChildren(TSharedRef<IPropertyHandl
 	.NameContent()	
 	[
 		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		[
+			PropertyHandle_Priority->CreatePropertyNameWidget()
+		]
+		+ SVerticalBox::Slot()
+		[
+			PropertyHandle_bIsOnlyOneInteractor->CreatePropertyNameWidget()
+		]
+		+ SVerticalBox::Slot()
+		[
+			PropertyHandle_bIsAnotherCanSeeWidget->CreatePropertyNameWidget()
+		]
 		+ SVerticalBox::Slot()
 		[
 			PropertyHandle_InteractionDistance->CreatePropertyNameWidget()
@@ -74,6 +89,18 @@ void FInteractSeetingsCustomization::CustomizeChildren(TSharedRef<IPropertyHandl
 	.ValueContent()
 	[
 		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		[
+			PropertyHandle_Priority->CreatePropertyValueWidget()
+		]
+		+ SVerticalBox::Slot()
+		[
+			PropertyHandle_bIsOnlyOneInteractor->CreatePropertyValueWidget()
+		]
+		+ SVerticalBox::Slot()
+		[
+			PropertyHandle_bIsAnotherCanSeeWidget->CreatePropertyValueWidget()
+		]
 		+ SVerticalBox::Slot()
 		[
 			PropertyHandle_InteractionDistance->CreatePropertyValueWidget()

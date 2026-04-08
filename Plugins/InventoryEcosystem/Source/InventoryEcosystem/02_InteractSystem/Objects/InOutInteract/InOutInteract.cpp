@@ -2,22 +2,28 @@
 #include "GameFramework/Character.h"
 #include "InventoryEcosystem/02_InteractSystem/Component/InteractAnimationComponent.h"
 
-void UInOutInteract::StartInteraction(UInteractAnimationComponent* Component, ACharacter* TargetPlayer)
+void UInOutInteract::StartInteraction(ACharacter* TargetPlayer)
 {
-	if (!IsValid(TargetPlayer) || !IsValid(Component)) return;
+	if (!IsValid(TargetPlayer)) return;
+	
+	RunInteract(TPSBeginAnimMontage, TargetPlayer);
+	OnStartAnimation.Broadcast(TargetPlayer, this);
+	
 	if (!TargetPlayer->GetMesh()) return;
 	if (!TargetPlayer->GetMesh()->GetAnimInstance()) return;
 	
-	OnStartAnimation.Broadcast(TargetPlayer, this);
-	RunInteract(TargetPlayer->GetMesh()->GetAnimInstance()->Montage_Play(TPSBeginAnimMontage), Component, TargetPlayer);
+	TargetPlayer->GetMesh()->GetAnimInstance()->Montage_Play(TPSBeginAnimMontage);
 }
 
-void UInOutInteract::EndInteraction(UInteractAnimationComponent* Component, ACharacter* TargetPlayer)
+void UInOutInteract::EndInteraction(ACharacter* TargetPlayer)
 {
-	if (!IsValid(TargetPlayer) || !IsValid(Component)) return;
+	if (!IsValid(TargetPlayer)) return;
+	
+	CancelInteract(TPSEndAnimMontage, TargetPlayer);
+	OnEndAnimation.Broadcast(TargetPlayer, this);
+	
 	if (!TargetPlayer->GetMesh()) return;
 	if (!TargetPlayer->GetMesh()->GetAnimInstance()) return;
 	
-	OnStartAnimation.Broadcast(TargetPlayer, this);
-	RunInteract(TargetPlayer->GetMesh()->GetAnimInstance()->Montage_Play(TPSEndAnimMontage), Component, TargetPlayer);
+	TargetPlayer->GetMesh()->GetAnimInstance()->Montage_Play(TPSEndAnimMontage);
 }

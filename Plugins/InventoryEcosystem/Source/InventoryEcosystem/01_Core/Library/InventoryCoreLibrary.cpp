@@ -65,3 +65,10 @@ bool UInventoryCoreLibrary::IsInGameView()
 
 	return false;
 }
+FString UInventoryCoreLibrary::GetPlayerNickname(AActor* From)
+{
+	if (!From) return "";
+	APlayerState* LPlayerState = UInventoryCoreLibrary::GetPlayerState(From);
+	if (!LPlayerState) return From->GetName();
+	return LPlayerState->GetPlayerName();
+}

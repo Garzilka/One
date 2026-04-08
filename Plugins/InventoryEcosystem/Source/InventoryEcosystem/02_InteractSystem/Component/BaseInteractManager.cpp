@@ -14,7 +14,6 @@ UBaseInteractManager::UBaseInteractManager()
 {
 	SetIsReplicatedByDefault(true);
 	SetIsReplicated(true);
-	PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UBaseInteractManager::BeginPlay()
@@ -23,14 +22,6 @@ void UBaseInteractManager::BeginPlay()
 	if (!IsLocallyControlled()) return;
 	
 	GetWorld()->GetTimerManager().SetTimer(Timer_InteractTrace, this, &UBaseInteractManager::PerformTrace, (1.f / InteractionCheckFrequency), true);	
-}
-
-void UBaseInteractManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, "Velocity: X: " + FString::FromInt(GetPlayerDirection().X) + " Y: " + FString::FromInt(GetPlayerDirection().Y));
-	// GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, "Collision Type \"Static\": Can block interact! Set CollisionType \"Dynamic\" for Volume");
 }
 
 void UBaseInteractManager::SetActive(bool bNewActive, bool bReset)
@@ -75,7 +66,7 @@ void UBaseInteractManager::InteractPressed()
 void UBaseInteractManager::Server_BeginInteract_Implementation(UBaseInteractComponent* InteractComponent)
 {
 	if (!IsValid(InteractComponent)) return;
-	InteractManagerState.SetNewInteractComponent(InteractComponent, GetInteractAnimationComponent(InteractComponent));
+	InteractManagerState.SetNewInteractComponent(InteractComponent, UInteractSystemLibrary::GetInteractAnimationComponent(InteractComponent));
 	BeginInteract();
 }
 
@@ -104,12 +95,13 @@ bool UBaseInteractManager::BeginInteract()
 
 
 void UBaseInteractManager::InteractReleased()
-{
+{	
 	if (!GetCurrentInteractComponent() || !GetOwningPlayerCharacter()) return;
 
 	if (IsCharacterInOtherAction()) return;
 
 	if (!GetCurrentInteractComponent()->CanInteractFor(GetOwningPlayerCharacter())) return;
+	if (GetCurrentInteractAnimationComponent() && GetCurrentInteractAnimationComponent()->IsOccupied()) return;
 
 	if (!HasAuthority())
 	{
@@ -268,8 +260,13 @@ void UBaseInteractManager::InteractionNone()
 	
 	if (!HasAuthority())
 	{
-		Server_EndFocus();
+		Server_EndFocus(LLostInteractComponent);
 	}
+}
+
+void UBaseInteractManager::Server_EndFocus_Implementation(UBaseInteractComponent* InteractComp)
+{
+	OnFocusLost.Broadcast(GetOwningPlayerCharacter(), InteractComp, InteractComp->GetOwner());	
 }
 
 void UBaseInteractManager::NewInteraction(UBaseInteractComponent* InteractComponent)
@@ -284,7 +281,7 @@ void UBaseInteractManager::NewInteraction(UBaseInteractComponent* InteractCompon
 		Server_BeginFocus(InteractComponent);
 	}
 	
-	InteractManagerState.SetNewInteractComponent(InteractComponent, GetInteractAnimationComponent(InteractComponent));
+	InteractManagerState.SetNewInteractComponent(InteractComponent, UInteractSystemLibrary::GetInteractAnimationComponent(InteractComponent));
 	OnBeginFocus.Broadcast(GetOwningPlayerCharacter(), InteractComponent, InteractComponent->GetOwner());
 	
 	if (!GetCurrentInteractComponent()) return;
@@ -292,37 +289,15 @@ void UBaseInteractManager::NewInteraction(UBaseInteractComponent* InteractCompon
 	GetCurrentInteractComponent()->BeginFocus(GetOwningPlayerCharacter());
 }
 
+void UBaseInteractManager::Server_BeginFocus_Implementation(UBaseInteractComponent* InteractComp)
+{
+	OnBeginFocus.Broadcast(GetOwningPlayerCharacter(), InteractComp, InteractComp->GetOwner());	
+}
+
 #pragma endregion INTERACT_STATE
 
 
 #pragma region TOOLS
-
-
-UInteractAnimationComponent* UBaseInteractManager::GetInteractAnimationComponent(UBaseInteractComponent* From)
-{
-	if (!(IsValid(From) && From->GetOwner())) return nullptr;
-	if (From->GetInteractAnimationComponent()) return From->GetInteractAnimationComponent();
-	TArray<UInteractAnimationComponent*> Components;
-	From->GetOwner()->GetComponents<UInteractAnimationComponent>(Components);
-
-	UInteractAnimationComponent* Result = nullptr;
-	for (auto Component : Components)
-	{
-		if (!Result)
-		{
-			Result = Component;
-			continue;
-		}
-		float Distance_1 = FVector::Distance(From->GetComponentLocation(), Result->GetComponentLocation());
-		float Distance_2 = FVector::Distance(From->GetComponentLocation(), Component->GetComponentLocation());
-		if (Distance_2 < Distance_1)
-		{
-			Result = Component;
-		}
-	}
-
-	return Result;
-}
 
 UBaseInteractComponent* UBaseInteractManager::GetInteractionComponent(TArray<FHitResult> Hits, FVector HitLocation,	bool IgnorePriority)
 {
@@ -410,7 +385,6 @@ UCameraComponent* UBaseInteractManager::GetCameraComponent()
 	PlayerCameraComponent = Cast<UCameraComponent>(GetOwningPlayerCharacter()->GetComponentByClass(UCameraComponent::StaticClass()));
 	return PlayerCameraComponent;
 }
-
 FVector UBaseInteractManager::GetCameraLocation()
 {
 	if (GetOwningPlayerController() && GetOwningPlayerController()->PlayerCameraManager)
@@ -461,7 +435,34 @@ FVector UBaseInteractManager::DoCollisionTest(float AppendVector)
 
 #pragma region InteractStateMachine
 
-void UBaseInteractManager::BreakCurrentInteraction()
+void UBaseInteractManager::CancelInteraction()
+{
+	if (IsNetMode(ENetMode::NM_Standalone))
+	{
+		SwitchInteractState(ECharacterInteractState::ECIS_None);
+		return;
+	}
+	
+	if (IsLocallyControlled() && !HasAuthority()) //ListenServer
+	{
+		Server_CancelInteraction();
+		SwitchInteractState(ECharacterInteractState::ECIS_None);
+	}
+	
+	if (HasAuthority())
+	{
+		Client_CancelInteraction();
+		SwitchInteractState(ECharacterInteractState::ECIS_None);
+		return;
+	}
+}
+
+void UBaseInteractManager::Server_CancelInteraction_Implementation()
+{
+	SwitchInteractState(ECharacterInteractState::ECIS_None);
+}
+
+void UBaseInteractManager::Client_CancelInteraction_Implementation()
 {
 	SwitchInteractState(ECharacterInteractState::ECIS_None);
 }
@@ -470,7 +471,11 @@ bool UBaseInteractManager::SwitchInteractState(ECharacterInteractState NewState)
 {
 	InteractManagerState.OldInteractState = InteractManagerState.CurrentInteractState;
 	InteractManagerState.CurrentInteractState = NewState;
-
+	if (NewState != ECharacterInteractState::ECIS_None && GetCurrentInteractComponent())
+	{
+		GetCurrentInteractComponent()->DeactivateOutLine();
+		OnFocusLost.Broadcast(GetOwningPlayerCharacter(), GetCurrentInteractComponent(), GetCurrentInteractComponent()->GetOwner());
+	}
 	switch (NewState)
 	{
 	case ECharacterInteractState::ECIS_None:
@@ -479,15 +484,25 @@ bool UBaseInteractManager::SwitchInteractState(ECharacterInteractState NewState)
 		{
 			GetWorld()->GetTimerManager().ClearTimer(Timer_MoveTo);
 		}
-		if (InteractManagerState.OldInteractState == ECharacterInteractState::ECIS_InteractState && GetCurrentInteractComponent() && GetCurrentInteractAnimationComponent()->GetAnimationInteractRule()) // В случае если было вызвано BreakCurrentInteraction
+		if (InteractManagerState.OldInteractState == ECharacterInteractState::ECIS_InteractState && GetCurrentInteractComponent() && GetCurrentInteractAnimationComponent()) // В случае если было вызвано BreakCurrentInteraction
 		{
-			GetCurrentInteractAnimationComponent()->GetAnimationInteractRule()->EndInteraction(GetCurrentInteractAnimationComponent(), GetOwningPlayerCharacter());
+			GetCurrentInteractAnimationComponent()->EndInteraction(GetOwningPlayerCharacter());
 			GetOwner()->SetActorTransform(GetCurrentInteractAnimationComponent()->GetInteractTransform());
+			
+			if (HasAuthority() && !IsNetMode(ENetMode::NM_Standalone)) //Dedicated | Listen Server
+			{
+				NetMulticast_CancelAnimation(GetCurrentInteractAnimationComponent());
+			}
 		}
 		AnimationInteractSuccessfull(); //Состояние интеракта выключено
 		InteractManagerState.TargetInteractState = ECharacterInteractState::ECIS_None;
 		InteractManagerState.CurrentInteractStateTag = FGameplayTag();
-		// OnChangeInteractStateType.Broadcast(this, InteractManagerState.CurrentInteractStateTag);
+		if (GetCurrentInteractComponent())
+		{
+			GetCurrentInteractComponent()->ActivateOutLine();
+			OnBeginFocus.Broadcast(GetOwningPlayerCharacter(), GetCurrentInteractComponent(), GetCurrentInteractComponent()->GetOwner());
+		}
+		OnInteractManagerStateChange.Broadcast(this);
 		return true;
 	}
 	case ECharacterInteractState::ECIS_MovingToInteractPoint:
@@ -501,12 +516,16 @@ bool UBaseInteractManager::SwitchInteractState(ECharacterInteractState NewState)
 	}
 	case ECharacterInteractState::ECIS_InteractState:
 	{
-		if (GetCurrentInteractComponent() && GetCurrentInteractAnimationComponent()->GetAnimationInteractRule())
+		if (GetCurrentInteractComponent() && GetCurrentInteractAnimationComponent())
 		{
-			GetCurrentInteractAnimationComponent()->GetAnimationInteractRule()->OnInteracted.AddUniqueDynamic(this, &ThisClass::OnAnimationCompleted);
+			GetCurrentInteractAnimationComponent()->OnInteracted.AddUniqueDynamic(this, &ThisClass::OnAnimationCompleted);
 			InteractManagerState.CurrentInteractStateTag = GetCurrentInteractAnimationComponent()->GetInteractState();
-			// OnChangeInteractStateType.Broadcast(this, InteractManagerState.CurrentInteractStateTag);
-			GetCurrentInteractAnimationComponent()->GetAnimationInteractRule()->StartInteraction(GetCurrentInteractAnimationComponent(), GetOwningPlayerCharacter());
+			OnInteractManagerStateChange.Broadcast(this);
+			GetCurrentInteractAnimationComponent()->StartInteraction(GetOwningPlayerCharacter());
+			if (HasAuthority() && !IsNetMode(ENetMode::NM_Standalone)) //Dedicated | Listen Server
+			{
+				NetMulticast_RunAnimation(GetCurrentInteractAnimationComponent());
+			}
 		}
 		return true;
 	}
@@ -516,12 +535,31 @@ bool UBaseInteractManager::SwitchInteractState(ECharacterInteractState NewState)
 	return false;
 }
 
-void UBaseInteractManager::OnAnimationCompleted(ACharacter* InCharacterInstigator, UAnimationInteractRule* InInteractRules)
+void UBaseInteractManager::NetMulticast_RunAnimation_Implementation(UInteractAnimationComponent* InteractComp)
+{
+	if (!InteractComp) return;
+	if (IsLocallyControlled() || HasAuthority()) return;
+	
+	InteractComp->StartInteraction(GetOwningPlayerCharacter());
+}
+
+void UBaseInteractManager::NetMulticast_CancelAnimation_Implementation(UInteractAnimationComponent* InteractComp)
+{
+	if (!InteractComp) return;
+	if (IsLocallyControlled() || HasAuthority()) return;
+	
+	InteractComp->EndInteraction(GetOwningPlayerCharacter());
+}
+
+void UBaseInteractManager::OnAnimationCompleted(ACharacter* InCharacterInstigator, UInteractAnimationComponent* InteractAnimComponent, UAnimationInteractRule* InteractRules)
 {
 	if (InCharacterInstigator != GetOwner()) return;
-
 	if (!GetCurrentInteractComponent()) return;
 	EventInteract(GetCurrentInteractComponent(), CachedTargetInteractType);
+	
+	if (InteractManagerState.CurrentInteractStateTag != FGameplayTag()) return;
+
+	CancelInteraction();
 }
 
 bool UBaseInteractManager::MoveToInteractPoint()
@@ -583,9 +621,5 @@ void UBaseInteractManager::MoveEnd()
 
 void UBaseInteractManager::OnRep_InteractManagerState()
 {
-	if (InteractManagerState.CurrentInteractState == ECharacterInteractState::ECIS_InteractState)
-	{
-		SwitchInteractState(InteractManagerState.CurrentInteractState);
-	}
-	// OnChangeInteractStateType.Broadcast(this, InteractManagerState.CurrentInteractStateTag);
+	OnInteractManagerStateChange.Broadcast(this);
 }

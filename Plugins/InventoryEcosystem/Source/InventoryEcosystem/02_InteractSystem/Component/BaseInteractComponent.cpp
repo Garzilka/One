@@ -6,12 +6,33 @@
 #include "Components/ArrowComponent.h"
 #include "InventoryEcosystem/01_Core/Library/InventoryCoreLibrary.h"
 
+#pragma region ENGINE
+
 UBaseInteractComponent::UBaseInteractComponent()
 {
+	SetIsReplicatedByDefault(true);
+	SetIsReplicated(true);
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 	PrimaryComponentTick.bTickEvenWhenPaused = true;
 	bTickInEditor = true;
+}
+
+void UBaseInteractComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	SetActive(true);
+}
+
+void UBaseInteractComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(UBaseInteractComponent, Description);
+	DOREPLIFETIME(UBaseInteractComponent, InteractSettings);
+	DOREPLIFETIME(UBaseInteractComponent, AngleSettings);
+	DOREPLIFETIME(UBaseInteractComponent, CurrentInteractors);
+	DOREPLIFETIME(UBaseInteractComponent, BlockInteractFor);
 }
 
 void UBaseInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -44,42 +65,36 @@ void UBaseInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	CurrentInteractTime = (CurrentInteractTime > InteractSettings.InteractionTime ? InteractSettings.InteractionTime : CurrentInteractTime + DeltaTime);
 }
 
-void UBaseInteractComponent::BeginPlay()
+#pragma endregion ENGINE
+
+bool UBaseInteractComponent::SetInteractNameText(FText NewNameText)
 {
-	Super::BeginPlay();
-	SetActive(true);
+	if (!HasAuthority()) return false;
+	
+	Description.NameText = NewNameText;
+	return true;
+}
+
+bool UBaseInteractComponent::SetInteractActionText(FText NewActionText)
+{
+	if (!HasAuthority()) return false;
+	
+	Description.ActionText = NewActionText;
+	return true;
 }
 
 void UBaseInteractComponent::BeginFocus(ACharacter* CharacterInstigator)
 {
 	OnBeginFocus.Broadcast(CharacterInstigator, this, GetOwner());
 
-	if (!IsNetMode(ENetMode::NM_DedicatedServer))
-	{
-		TArray<UPrimitiveComponent*> Primitives;
-		GetOwner()->GetComponents<UPrimitiveComponent>(Primitives);
-		for (auto VisualComp : Primitives)
-		{
-			if (IsOutLine(VisualComp))
-				VisualComp->SetRenderCustomDepth(true);
-		}
-	}
+	ActivateOutLine();
 }
 
 void UBaseInteractComponent::EndFocus(ACharacter* CharacterInstigator)
 {
 	OnBeginFocus.Broadcast(CharacterInstigator, this, GetOwner());
 
-	if (!IsNetMode(ENetMode::NM_DedicatedServer))
-	{
-		TArray<UPrimitiveComponent*> Primitives;
-		GetOwner()->GetComponents<UPrimitiveComponent>(Primitives);
-		for (auto VisualComp : Primitives)
-		{
-			if (IsOutLine(VisualComp))
-				VisualComp->SetRenderCustomDepth(false);
-		}
-	}
+	DeactivateOutLine();
 }
 
 void UBaseInteractComponent::Interact(ACharacter* CharacterInstigator, EInteractType InteractType)
@@ -129,9 +144,48 @@ float UBaseInteractComponent::GetInteractPercent() const
 	return 0.f;
 }
 
+void UBaseInteractComponent::ActivateOutLine()
+{
+	if (IsNetMode(ENetMode::NM_DedicatedServer)) return;
+	
+	TArray<UPrimitiveComponent*> Primitives;
+	GetOwner()->GetComponents<UPrimitiveComponent>(Primitives);
+	for (auto VisualComp : Primitives)
+	{
+		if (IsOutLine(VisualComp))
+			VisualComp->SetRenderCustomDepth(true);
+	}
+}
+
+void UBaseInteractComponent::DeactivateOutLine()
+{
+	if (IsNetMode(ENetMode::NM_DedicatedServer)) return;
+	
+	TArray<UPrimitiveComponent*> Primitives;
+	GetOwner()->GetComponents<UPrimitiveComponent>(Primitives);
+	for (auto VisualComp : Primitives)
+	{
+		if (IsOutLine(VisualComp))
+			VisualComp->SetRenderCustomDepth(false);
+	}
+}
+
 bool UBaseInteractComponent::CanInteractFor(ACharacter* CharacterInstigator) const
 {
-	return IsActive();
+	if (!IsActive()) return false;
+	if (InteractSettings.bIsOnlyOneInteractor && CurrentInteractors.Num() > 0 && !CurrentInteractors.Contains(CharacterInstigator)) return false;
+
+	return (BlockInteractFor.Find(FBlockInteractInfo(CharacterInstigator)) == INDEX_NONE);
+}
+
+bool UBaseInteractComponent::CanViewFor(ACharacter* CharacterInstigator) const
+{
+	if (!IsActive())	return false;
+
+	int32 Idx = BlockInteractFor.Find(FBlockInteractInfo(CharacterInstigator));
+	if (Idx == INDEX_NONE) return true;
+
+	return BlockInteractFor[Idx].CanViewInteractWidget;
 }
 
 bool UBaseInteractComponent::HasInteractFlag(EInteractType Type) const

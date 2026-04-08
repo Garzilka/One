@@ -33,17 +33,23 @@ public:
 	FInteractedChangeStateSignature OnEndInteract;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Настройки|Компонент взаимодействия", ReplicatedUsing = OnRep_UpdateInteractDescription)
 	FInteractDescription Description;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Настройки|Компонент взаимодействия", ReplicatedUsing = OnRep_UpdateInteractData, meta = (DisplayName = "Описание взаимодействия"))
 	FInteractSettings InteractSettings;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Настройки ограничения угла"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Настройки|Компонент взаимодействия", ReplicatedUsing = OnRep_UpdateAngleSettings, meta = (DisplayName = "Настройки ограничения угла"))
 	FInteractAngleSettings AngleSettings;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Настройки ограничения угла"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Настройки|Компонент взаимодействия", meta = (DisplayName = "Укажите компонент анимаций"))
 	UInteractAnimationComponent* InteractAnimationComponent;
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_UpdateInteractors)
+	TArray<ACharacter*> CurrentInteractors;
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_BlockInteractFor)
+	TArray<FBlockInteractInfo> BlockInteractFor;
 
 	UPROPERTY()
 	float CurrentInteractTime = 0.f;
@@ -54,6 +60,12 @@ protected:
 public:
 	UBaseInteractComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryEcosystem|Interact|InteractComponent")
+	bool SetInteractNameText(FText NewNameText);
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryEcosystem|Interact|InteractComponent")
+	bool SetInteractActionText(FText NewActionText);
 
 	UFUNCTION(BlueprintPure)
 	FInteractSettings GetInteractSettings() const {return InteractSettings;};
@@ -87,6 +99,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
 	bool CanInteractFor(ACharacter* CharacterInstigator) const;
 
+	/**	*/
+	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
+	bool CanViewFor(ACharacter* CharacterInstigator) const;
+
 	/**/
 	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
 	bool CanBePressed() const;
@@ -102,8 +118,34 @@ public:
 	
 	UFUNCTION(BlueprintPure, Category = "InventoryEcosystem|Interact|InteractComponent")
 	UInteractAnimationComponent* GetInteractAnimationComponent() const { return InteractAnimationComponent;};
+	
+	UFUNCTION(BlueprintCallable, Category = "InventoryEcosystem|Interact|InteractComponent")
+	void ActivateOutLine();
+	
+	UFUNCTION(BlueprintCallable, Category = "InventoryEcosystem|Interact|InteractComponent")
+	void DeactivateOutLine();
 
 protected:
 	virtual void BeginPlay() override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+
+	UFUNCTION()
+	void OnRep_UpdateInteractDescription() {};
+
+	UFUNCTION()
+	void OnRep_UpdateInteractData() {};
+
+	UFUNCTION()
+	void OnRep_UpdateAngleSettings() {};
+
+	UFUNCTION()
+	void OnRep_UpdateInteractors() {};
+
+	UFUNCTION()
+	void OnRep_UpdateCurrentViewer() {};
+
+	UFUNCTION()
+	void OnRep_BlockInteractFor() {};
 	
 };

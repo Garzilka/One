@@ -12,6 +12,9 @@
 UInteractAnimationComponent::UInteractAnimationComponent()
 {
 	SetHiddenInGame(true);
+	SetIsReplicatedByDefault(true);
+	SetIsReplicated(true);
+	
 	SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	if (const UInteractSystemSettings* InteractSystemSettings = UInteractSystemSettings::Get())
@@ -35,6 +38,22 @@ UInteractAnimationComponent::UInteractAnimationComponent()
 	}
 }
 
+void UInteractAnimationComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(UInteractAnimationComponent, CurrentInteractor);
+}
+
+bool UInteractAnimationComponent::IsClassInstalled()
+{
+	return (AnimationRule != nullptr);
+}
+
+void UInteractAnimationComponent::OnRep_UpdateInteractor()
+{
+	OnChangeCurrentInteractor.Broadcast(this);
+};
 
 void UInteractAnimationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -52,6 +71,28 @@ void UInteractAnimationComponent::TickComponent(float DeltaTime, ELevelTick Tick
 		}
 	}
 #endif
+}
+
+void UInteractAnimationComponent::StartInteraction(ACharacter* TargetPlayer)
+{
+	if (!TargetPlayer) return;
+	
+	if (AnimationRule)
+	{
+		AnimationRule->StartInteraction(this, TargetPlayer);
+	}
+	CurrentInteractor = TargetPlayer;
+	OnRep_UpdateInteractor();	
+}
+
+void UInteractAnimationComponent::EndInteraction(ACharacter* TargetPlayer)
+{
+	if (!TargetPlayer) return;
+	
+	if (AnimationRule)
+	{
+		AnimationRule->EndInteraction(this, TargetPlayer);
+	}
 }
 
 FTransform UInteractAnimationComponent::GetInteractTransform(bool IsRelative)
@@ -73,13 +114,16 @@ FTransform UInteractAnimationComponent::GetInteractTransform(bool IsRelative)
 void UInteractAnimationComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	SetVisibleFlag(false);
+	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bTickEvenWhenPaused = false;
 	
 	if (AnimationRule)
 	{
 		AnimationRule->OnInteracted.AddUniqueDynamic(this, &ThisClass::Event_Interacted);
 		AnimationRule->OnStartAnimation.AddUniqueDynamic(this, &ThisClass::Event_StartAnimation);
 		AnimationRule->OnEndAnimation.AddUniqueDynamic(this, &ThisClass::Event_EndAnimation);
-		AnimationRule->OnInteractAnimation.AddUniqueDynamic(this, &ThisClass::Event_InteractAnimation);
+		AnimationRule->OnCancelInteract.AddUniqueDynamic(this, &ThisClass::Event_CancelInteract);
 	}
 }
 
@@ -111,10 +155,11 @@ void UInteractAnimationComponent::Event_Interacted(ACharacter* CharacterInstigat
 
 void UInteractAnimationComponent::Event_EndAnimation(ACharacter* CharacterInstigator, UAnimationInteractRule* InteractRules)
 {
-	OnStartAnimation.Broadcast(CharacterInstigator, this, InteractRules);
+	OnEndAnimation.Broadcast(CharacterInstigator, this, InteractRules);
 };
 
-void UInteractAnimationComponent::Event_InteractAnimation(ACharacter* CharacterInstigator, UAnimationInteractRule* InteractRules)
+void UInteractAnimationComponent::Event_CancelInteract(ACharacter* CharacterInstigator, UAnimationInteractRule* InteractRules)
 {
-	OnStartAnimation.Broadcast(CharacterInstigator, this, InteractRules);
+	CurrentInteractor = nullptr;
+	OnRep_UpdateInteractor();
 };

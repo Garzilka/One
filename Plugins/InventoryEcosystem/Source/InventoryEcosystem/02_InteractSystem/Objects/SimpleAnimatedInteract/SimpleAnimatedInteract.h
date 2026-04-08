@@ -25,6 +25,6 @@ protected:
 	UAnimMontage* TPSInteractAnimMontage;
 
 public:
-	virtual void StartInteraction(class UInteractAnimationComponent* Component, ACharacter* TargetPlayer) override;
+	virtual void StartInteraction(ACharacter* TargetPlayer) override;
 	virtual UAnimMontage* GetPreviewAnimation() override {return TPSInteractAnimMontage;};
 };

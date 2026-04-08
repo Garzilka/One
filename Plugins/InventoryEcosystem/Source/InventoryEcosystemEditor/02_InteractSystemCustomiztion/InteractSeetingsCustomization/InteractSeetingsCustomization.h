@@ -26,4 +26,7 @@ protected:
 	TSharedPtr<IPropertyHandle> PropertyHandle_TypeTimeDegradation;
 	TSharedPtr<IPropertyHandle> PropertyHandle_SpeedOfRevers;
 	TSharedPtr<IPropertyHandle> PropertyHandle_InteractionDistance;
+	TSharedPtr<IPropertyHandle> PropertyHandle_Priority;
+	TSharedPtr<IPropertyHandle> PropertyHandle_bIsOnlyOneInteractor;
+	TSharedPtr<IPropertyHandle> PropertyHandle_bIsAnotherCanSeeWidget;
 };

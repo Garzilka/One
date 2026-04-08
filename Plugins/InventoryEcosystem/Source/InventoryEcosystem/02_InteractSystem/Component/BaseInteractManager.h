@@ -15,7 +15,12 @@
 
 #include "BaseInteractManager.generated.h"
 
-
+/**
+* Вызывается когда менеджер обновился
+* Локально + Сервер
+* @InteractManager - Менеджер взаимодействия
+*/
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractManagerUpdateSignature, class UBaseInteractManager*, InteractManager);
 
 USTRUCT(BlueprintType)
 struct FInteractManagerState
@@ -68,7 +73,7 @@ public:
 
 	bool CanBeTrace() const
 	{
-		return true;
+		return CurrentInteractState == ECharacterInteractState::ECIS_None;
 	}
 protected:
 	
@@ -111,6 +116,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Delegates")
 	FInteractedChangeStateSignature OnEndInteract;
+
+	UPROPERTY(BlueprintAssignable, Category = "Delegates")
+	FInteractManagerUpdateSignature OnInteractManagerStateChange;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Настройки|Менеджер взаимодействие|Базовые",
@@ -202,18 +210,11 @@ public:
 
 	/** */
 	UFUNCTION(BlueprintCallable, Category = "InteractSystem|InteractManager|Actions")
-	void BreakCurrentInteraction();	
-
-	/** */
-	UFUNCTION(BlueprintCallable, Category = "InteractSystem|InteractManager|Actions")
-	void CancelInteraction() { BreakCurrentInteraction(); }
+	void CancelInteraction();
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
-	UInteractAnimationComponent* GetInteractAnimationComponent(UBaseInteractComponent* From);
 	/*
 	* Вызывается при InteractPressed
 	* Вызовится если есть с чем взаимодействовать */
@@ -237,7 +238,7 @@ protected:
 	void OnRep_InteractManagerState();
 	
 	UFUNCTION()
-	void OnAnimationCompleted(ACharacter* CharacterInstigator, UAnimationInteractRule* InteractRules);
+	void OnAnimationCompleted(ACharacter* InCharacterInstigator, UInteractAnimationComponent* InteractAnimComponent, UAnimationInteractRule* InteractRules);
 
 	UFUNCTION()
 	void OnRep_LastAxis() {};
@@ -281,12 +282,28 @@ protected:
 	void Server_EndInteract_Implementation(UBaseInteractComponent* InteractComponent);
 
 	UFUNCTION(Server, Reliable)
-	void Server_BeginFocus(class UBaseInteractComponent* InteractComp);
-	void Server_BeginFocus_Implementation(class UBaseInteractComponent* InteractComp) { return; }
+	void Server_BeginFocus(UBaseInteractComponent* InteractComp);
+	void Server_BeginFocus_Implementation(UBaseInteractComponent* InteractComp);
 
 	UFUNCTION(Server, Reliable)
-	void Server_EndFocus();
-	void Server_EndFocus_Implementation() { return; }
+	void Server_EndFocus(UBaseInteractComponent* InteractComp);
+	void Server_EndFocus_Implementation(UBaseInteractComponent* InteractComp);
+
+	UFUNCTION(Server, Reliable)
+	void Server_CancelInteraction();
+	void Server_CancelInteraction_Implementation();
+
+	UFUNCTION(Client, Reliable)
+	void Client_CancelInteraction();
+	void Client_CancelInteraction_Implementation();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_RunAnimation(UInteractAnimationComponent* InteractComp);
+	void NetMulticast_RunAnimation_Implementation(UInteractAnimationComponent* InteractComp);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_CancelAnimation(UInteractAnimationComponent* InteractComp);
+	void NetMulticast_CancelAnimation_Implementation(UInteractAnimationComponent* InteractComp);
 
 	/** Взять текущую позицию камеры*/
 	FVector GetCameraLocation();

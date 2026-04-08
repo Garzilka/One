@@ -28,7 +28,6 @@ public:
 	UFUNCTION()
 	static void PrintString(FString Message, FColor Color = FColor::Blue);
 	static FColor ErrorToColor(E_IES_LOG_TYPE ErrorType);
-	static FString GetPlayerNickname(AActor* From);
 	static FString GetNetMode(AActor* InActor);
 	
 };

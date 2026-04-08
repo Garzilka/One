@@ -22,16 +22,16 @@ void UInventoryCoreLogTools::LOG(AActor* Owner, UBaseInventoryObject* InObject, 
 	case E_IES_LOG_TYPE::EIEST_Display:
 		{
 			UE_LOG(LOG_IES_BIO, Display, TEXT("[%s][%i] | Net mode: %s | Player name: %s | Item name: %s | Text: %s"),
-				ANSI_TO_TCHAR(Function), Line, *UInventoryCoreLogTools::GetNetMode(Owner), *UInventoryCoreLogTools::GetPlayerNickname(Owner), *(InObject->GetClass()->GetName()), *Str);
+				ANSI_TO_TCHAR(Function), Line, *UInventoryCoreLogTools::GetNetMode(Owner), *UInventoryCoreLibrary::GetPlayerNickname(Owner), *(InObject->GetClass()->GetName()), *Str);
 			break;
 		}
 	case E_IES_LOG_TYPE::EIEST_Warning:
 		UE_LOG(LOG_IES_BIO, Warning, TEXT("[%s][%i] | Net mode: %s | Player name: %s | Item name: %s | Text: %s"),
-			ANSI_TO_TCHAR(Function), Line, *UInventoryCoreLogTools::GetNetMode(Owner), *UInventoryCoreLogTools::GetPlayerNickname(Owner), *(InObject->GetClass()->GetName()), *Str);
+			ANSI_TO_TCHAR(Function), Line, *UInventoryCoreLogTools::GetNetMode(Owner), *UInventoryCoreLibrary::GetPlayerNickname(Owner), *(InObject->GetClass()->GetName()), *Str);
 		break;
 	case E_IES_LOG_TYPE::EIEST_Error:
 		UE_LOG(LOG_IES_BIO, Error, TEXT("[%s][%i] | Net mode: %s | Player name: %s | Item name: %s | Text: %s"),
-			ANSI_TO_TCHAR(Function), Line, *UInventoryCoreLogTools::GetNetMode(Owner), *UInventoryCoreLogTools::GetPlayerNickname(Owner), *(InObject->GetClass()->GetName()), *Str);
+			ANSI_TO_TCHAR(Function), Line, *UInventoryCoreLogTools::GetNetMode(Owner), *UInventoryCoreLibrary::GetPlayerNickname(Owner), *(InObject->GetClass()->GetName()), *Str);
 		break;
 	default:
 		break;
@@ -55,13 +55,6 @@ FColor UInventoryCoreLogTools::ErrorToColor(E_IES_LOG_TYPE ErrorType)
 	}
 }
 
-FString UInventoryCoreLogTools::GetPlayerNickname(AActor* From)
-{
-	if (!From) return "";
-	APlayerState* LPlayerState = UInventoryCoreLibrary::GetPlayerState(From);
-	if (!LPlayerState) return From->GetName();
-	return LPlayerState->GetPlayerName();
-}
 
 FString UInventoryCoreLogTools::GetNetMode(AActor* InActor)
 {

@@ -2,12 +2,15 @@
 
 #include "InventoryEcosystem/02_InteractSystem/Component/InteractAnimationComponent.h"
 
-void USimpleAnimatedInteract::StartInteraction(UInteractAnimationComponent* Component, ACharacter* TargetPlayer)
+void USimpleAnimatedInteract::StartInteraction(ACharacter* TargetPlayer)
 {	
-	if (!IsValid(TargetPlayer) || !IsValid(Component)) return;
-	if (!TargetPlayer->GetMesh()) return;
-	if (!TargetPlayer->GetMesh()->GetAnimInstance()) return;
+	if (!IsValid(TargetPlayer)) return;
 	
 	OnStartAnimation.Broadcast(TargetPlayer, this);
-	RunInteract(TargetPlayer->GetMesh()->GetAnimInstance()->Montage_Play(TPSInteractAnimMontage), Component, TargetPlayer);
+	RunInteract(TPSInteractAnimMontage, TargetPlayer);
+	CancelInteract(TPSInteractAnimMontage, TargetPlayer);
+	
+	if (!TargetPlayer->GetMesh()) return;
+	if (!TargetPlayer->GetMesh()->GetAnimInstance()) return;
+	TargetPlayer->GetMesh()->GetAnimInstance()->Montage_Play(TPSInteractAnimMontage);
 }

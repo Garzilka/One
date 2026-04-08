@@ -61,6 +61,16 @@ void AGameplayCharacter::Input_AIM(const FInputActionValue& ActionValue)
 void AGameplayCharacter::Input_Interact(const FInputActionValue& ActionValue)
 {
 	const auto Value{ActionValue.Get<bool>()};
+
+	if (InteractManager && InteractManager->CharacterInActiveAction())
+	{
+		if (Value)
+		{
+			InteractManager->CancelInteraction();
+		}
+		return;
+	}
+	
 	if (Value)
 	{
 		InteractManager->InteractPressed();
@@ -74,6 +84,10 @@ void AGameplayCharacter::Input_Interact(const FInputActionValue& ActionValue)
 
 void AGameplayCharacter::Input_OnMove(const FInputActionValue& ActionValue)
 {
+	if (InteractManager && InteractManager->CharacterInActiveAction())
+	{
+		return;
+	}
 	const FVector2D Value{ UGameplayLibrary::ClampMagnitude012D(ActionValue.Get<FVector2D>()) };
 
 	const FVector ForwardDirection{ UGameplayLibrary::AngleToDirectionXY(UE_REAL_TO_FLOAT(GetActorRotation().Yaw)) };

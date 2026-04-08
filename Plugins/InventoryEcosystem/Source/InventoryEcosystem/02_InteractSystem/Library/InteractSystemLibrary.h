@@ -65,4 +65,10 @@ class INTERACTSYSTEM_API UInteractSystemLibrary : public UBlueprintFunctionLibra
 public:
 	static bool LineTrace(FInteractTraceData TraceData, TArray<FHitResult>& OutPut, FInteractDebugData IsShowDrawDebug);
 	static bool PerformTrace(FInteractTraceData TraceData, TArray<FHitResult>& OutPut, FInteractDebugData IsShowDrawDebug);
+
+	UFUNCTION(BlueprintCallable)
+	static UInteractAnimationComponent* GetInteractAnimationComponent(UBaseInteractComponent* From);
+
+	UFUNCTION(BlueprintCallable)
+	static UInteractAnimationComponent* GetInteractAnimationFromActor(AActor* From);
 };

@@ -1,41 +1,54 @@
 ﻿#include "AnimationInteractRule.h"
 
+#include "InventoryEcosystem/02_InteractSystem/AnimNotify/AnimNotify_Interacted.h"
+
 
 void UAnimationInteractRule::InteractCallback(ACharacter* Target)
 {
 	if (!(IsPossiblyAllocatedUObjectPointer(Target) && IsValid(Target))) return;
-	
-	if (InteractCallType == EInteractCallType::EICT_BeforeInteractAnimation)
-	{
-		CurrentInteractions.Remove(Target);
-	}
-	
 	OnInteracted.Broadcast(Target, this);
 }
 
-void UAnimationInteractRule::RunInteract(float Time, UInteractAnimationComponent* Component, ACharacter* TargetPlayer)
+void UAnimationInteractRule::RunInteract(UAnimMontage* Montage, ACharacter* TargetPlayer)
 {
-	if (InteractCallType == EInteractCallType::EICT_BeforeInteractAnimation)
+	if (!Montage)
 	{
 		InteractCallback(TargetPlayer);
+		return;
 	}
-
-	if (InteractCallType == EInteractCallType::EICT_AfterInteractAnimation)
+	
+	FName NameNotify = FName(UAnimNotify_Interacted::StaticClass()->GetName());
+	float LTime = Montage->GetPlayLength();
+	for (auto notify : Montage->Notifies)
 	{
-		FTimerHandle Timer_Broadcast;
+		if (notify.NotifyName != NameNotify) continue;
 		
-		if (auto TimerRef = CurrentInteractions.Find(TargetPlayer))
-		{
-			Timer_Broadcast = *TimerRef;
-			GetWorld()->GetTimerManager().ClearTimer(Timer_Broadcast);
-		}
-		else
-		{
-			CurrentInteractions.Add(TargetPlayer, Timer_Broadcast);
-		}
-			
-		FTimerDelegate Delegate;
-		Delegate.BindUFunction(this, TEXT("InteractCallback"), TargetPlayer);			
-		GetWorld()->GetTimerManager().SetTimer(Timer_Broadcast, Delegate, Time, false);
+		LTime = (1.f/Montage->RateScale) * notify.GetTriggerTime();
 	}
+	
+	GetWorld()->GetTimerManager().ClearTimer(Timer_TimeToInteract);
+	
+	FTimerDelegate Delegate;
+	Delegate.BindUFunction(this, TEXT("InteractCallback"), TargetPlayer);			
+	GetWorld()->GetTimerManager().SetTimer(Timer_TimeToInteract, Delegate, LTime, false);
+}
+
+void UAnimationInteractRule::CancelInteractCallback(ACharacter* Target)
+{
+	if (!(IsPossiblyAllocatedUObjectPointer(Target) && IsValid(Target))) return;
+	OnCancelInteract.Broadcast(Target, this);
+}
+
+void UAnimationInteractRule::CancelInteract(UAnimMontage* Montage,	ACharacter* TargetPlayer)
+{
+	if (!Montage)
+	{
+		CancelInteractCallback(TargetPlayer);
+		return;
+	}
+	GetWorld()->GetTimerManager().ClearTimer(Timer_CancelInteract);
+	
+	FTimerDelegate Delegate;
+	Delegate.BindUFunction(this, TEXT("CancelInteractCallback"), TargetPlayer);			
+	GetWorld()->GetTimerManager().SetTimer(Timer_CancelInteract, Delegate, Montage->GetPlayLength(), false);
 }

@@ -3,20 +3,40 @@
 #include "CoreMinimal.h"
 #include "InteractData.generated.h"
 
+USTRUCT(BlueprintType)
+struct FBlockInteractInfo
+{
+	GENERATED_BODY()
+
+public:
+	FBlockInteractInfo() { Target = nullptr; CanViewInteractWidget = false; };
+	FBlockInteractInfo(ACharacter* InTarget) { Target = InTarget; CanViewInteractWidget = false; };
+	FBlockInteractInfo(ACharacter* InTarget, bool InCanView) { Target = InTarget; CanViewInteractWidget = InCanView; };
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	ACharacter* Target = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool CanViewInteractWidget = false;
+
+	friend bool operator==(const FBlockInteractInfo& Left, const ACharacter* Right)
+	{
+		return (Left.Target == Right);
+	}
+
+	friend bool operator==(const FBlockInteractInfo& Left, const FBlockInteractInfo& Right)
+	{
+		return (Left.Target == Right.Target);
+	}
+};
+
+
 UENUM(BlueprintType)
 enum class EInteractPositionType : uint8
 {
 	EIPT_None					UMETA(DisplayName = "Нет"),
 	EIPT_Point					UMETA(DisplayName = "Точка взаимодействия"),
 	EIPT_Radius					UMETA(DisplayName = "Радиус взаимодействия"),
-};
-
-UENUM(BlueprintType)
-enum class EInteractCallType : uint8
-{
-	EICT_BeforeInteractAnimation	UMETA(DisplayName = "До анимации взаимодействия"),
-	EICT_AfterInteractAnimation		UMETA(DisplayName = "После анимации взаимодействия"),
-	EICT_ByAnimNotify				UMETA(DisplayName = "По Notify"),
 };
 
 UENUM(BlueprintType)
@@ -116,11 +136,11 @@ struct FInteractSettings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 50.f, UIMin = 50.f, DisplayName = "Дистанция взаимодействия"))
 	float InteractionDistance = 700.f;
 
-	UPROPERTY(EditDefaultsOnly,  
-		meta = (DisplayName = "Взаимодействует только один", Tooltip = "Пока тот кто начал взаимодействовать не закончит, взаимодействовать с ним нельзя"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,  
+		meta = (DisplayName = "Взаимодействует только один", Tooltip = "Если взаимодействие кто-то производит, взаимодействовать с объектом нельзя"))
 	bool bIsOnlyOneInteractor = false;
 
-	UPROPERTY(EditDefaultsOnly, meta = (EditCondition = "bIsOnlyOneInteractor", EditConditionHides,
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bIsOnlyOneInteractor", EditConditionHides,
 			DisplayName = "Другой может видеть виджет", ToolTip = "Если игрок выполняет действие, другой игрок может видеть прогресс"))
 	bool bIsAnotherCanSeeWidget = true;
 };

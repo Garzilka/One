@@ -23,8 +23,8 @@ class INVENTORYCORE_API IObjectManagmentInterface
 public:
 
 	UFUNCTION(BlueprintNativeEvent)
-	bool I_RemoveObject(class UBaseInventoryObject* Item);
+	bool I_RemoveObject(class UCoreInventoryObject* Item);
 
 	UFUNCTION(BlueprintNativeEvent)
-	bool I_CanRemoveObject(class UBaseInventoryObject* Item);
+	bool I_CanRemoveObject(class UCoreInventoryObject* Item);
 };

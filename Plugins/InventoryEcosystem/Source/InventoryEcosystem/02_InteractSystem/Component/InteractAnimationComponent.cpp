@@ -79,7 +79,7 @@ void UInteractAnimationComponent::StartInteraction(ACharacter* TargetPlayer)
 	
 	if (AnimationRule)
 	{
-		AnimationRule->StartInteraction(this, TargetPlayer);
+		AnimationRule->StartInteraction(TargetPlayer);
 	}
 	CurrentInteractor = TargetPlayer;
 	OnRep_UpdateInteractor();	
@@ -91,7 +91,7 @@ void UInteractAnimationComponent::EndInteraction(ACharacter* TargetPlayer)
 	
 	if (AnimationRule)
 	{
-		AnimationRule->EndInteraction(this, TargetPlayer);
+		AnimationRule->EndInteraction(TargetPlayer);
 	}
 }
 

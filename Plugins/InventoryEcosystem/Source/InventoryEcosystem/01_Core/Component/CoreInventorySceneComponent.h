@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
+#include "Components/SceneComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
-#include "BaseInventoryComponent.generated.h"
+#include "CoreInventorySceneComponent.generated.h"
 
 
-UCLASS(meta=(BlueprintSpawnableComponent))
-class INVENTORYCORE_API UBaseInventoryComponent : public UActorComponent
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class INVENTORYCORE_API UCoreInventorySceneComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
-public:	
-	UBaseInventoryComponent();
+public:
+	UCoreInventorySceneComponent();
 
 	UFUNCTION(BlueprintPure)
 	bool HasAuthority() const { return (GetOwner() && GetOwner()->HasAuthority()); };
@@ -33,8 +33,8 @@ public:
 	APlayerController* GetOwningPlayerController();
 
 	void ChangeObjectOuter(UObject* ItemRef, AActor* InNewOuter);
-	
 protected:
+
 	bool CanSerialize() const
 	{
 		if ((!GEngine || !GetOwner() || HasAnyFlags(RF_ArchetypeObject)))
@@ -52,5 +52,4 @@ private:
 
 	UPROPERTY()
 	APlayerController* ControllerOwner = nullptr;
-
 };

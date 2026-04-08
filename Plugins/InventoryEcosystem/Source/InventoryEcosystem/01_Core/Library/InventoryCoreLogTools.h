@@ -14,7 +14,7 @@ enum class E_IES_LOG_TYPE : uint8
 	EIEST_Error
 };
 
-class UBaseInventoryObject;
+class UCoreInventoryObject;
 
 UCLASS()
 class INVENTORYCORE_API UInventoryCoreLogTools : public UBlueprintFunctionLibrary
@@ -22,7 +22,7 @@ class INVENTORYCORE_API UInventoryCoreLogTools : public UBlueprintFunctionLibrar
 	GENERATED_BODY()
 
 public:
-	static void LOG(AActor* Owner, UBaseInventoryObject* InObject, E_IES_LOG_TYPE TypeLog, FString Str, int Line, const char* Function);
+	static void LOG(AActor* Owner, UCoreInventoryObject* InObject, E_IES_LOG_TYPE TypeLog, FString Str, int Line, const char* Function);
 
 
 	UFUNCTION()

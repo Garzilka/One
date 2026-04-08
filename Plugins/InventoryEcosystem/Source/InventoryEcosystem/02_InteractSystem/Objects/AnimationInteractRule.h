@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "InventoryEcosystem/01_Core/Object/BaseInventoryObject.h"
+#include "InventoryEcosystem/01_Core/Object/CoreInventoryObject.h"
 #include "InventoryEcosystem/02_InteractSystem/Data/InteractData.h"
 #include "AnimationInteractRule.generated.h"
 
@@ -14,7 +14,7 @@ class UInteractAnimationComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAnimationInteractRuleSignature, class ACharacter*, CharacterInstigator, class UAnimationInteractRule*, InteractRules);
 
 UCLASS(EditInlineNew, DefaultToInstanced, Abstract)
-class INTERACTSYSTEM_API UAnimationInteractRule : public UBaseInventoryObject
+class INTERACTSYSTEM_API UAnimationInteractRule : public UCoreInventoryObject
 {
 	GENERATED_BODY()
 	

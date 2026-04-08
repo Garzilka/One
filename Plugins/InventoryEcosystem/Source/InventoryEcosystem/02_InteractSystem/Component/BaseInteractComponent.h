@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InventoryEcosystem/01_Core/Component/BaseInventorySceneComponent.h"
+#include "InventoryEcosystem/01_Core/Component/CoreInventorySceneComponent.h"
 #include "InventoryEcosystem/02_InteractSystem/Data/InteractData.h"
 #include "InventoryEcosystem/02_InteractSystem/Objects/AnimationInteractRule.h"
 #include "BaseInteractComponent.generated.h"
@@ -12,7 +12,7 @@
 
 
 UCLASS(Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent), HideCategories = ("Component", "Sockets", "Collision", "AssetUserData", "Component Tick", "ComponentTick", "Component Replication", "ComponentReplication", "Cooking", "Activation", "Variable"))
-class INTERACTSYSTEM_API UBaseInteractComponent : public UBaseInventorySceneComponent
+class INTERACTSYSTEM_API UBaseInteractComponent : public UCoreInventorySceneComponent
 {
 	GENERATED_BODY()
 

@@ -2,13 +2,13 @@
 
 #include "GameFramework/PlayerState.h"
 #include "InventoryEcosystem/01_Core/Library/InventoryCoreLibrary.h"
-#include "InventoryEcosystem/01_Core/Object/BaseInventoryObject.h"
+#include "InventoryEcosystem/01_Core/Object/CoreInventoryObject.h"
 
 
 DEFINE_LOG_CATEGORY_STATIC(LOG_IES_BIO, All, All);
 static TAutoConsoleVariable<bool> C_IES_VIEW_LOG_BIO(TEXT("IES.LOG.BIO"), false, TEXT("Enable write log to screen"), ECVF_Cheat);
 
-void UInventoryCoreLogTools::LOG(AActor* Owner, UBaseInventoryObject* InObject, E_IES_LOG_TYPE TypeLog, FString Str, int Line, const char* Function)
+void UInventoryCoreLogTools::LOG(AActor* Owner, UCoreInventoryObject* InObject, E_IES_LOG_TYPE TypeLog, FString Str, int Line, const char* Function)
 {
 	if (Owner == nullptr || InObject == nullptr) return;
 

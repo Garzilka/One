@@ -11,7 +11,7 @@
 #include "BaseInteractComponent.h"
 #include "GameplayTagContainer.h"
 #include "InteractAnimationComponent.h"
-#include "InventoryEcosystem/01_Core/Component/BaseInventoryComponent.h"
+#include "InventoryEcosystem/01_Core/Component/CoreInventoryComponent.h"
 
 #include "BaseInteractManager.generated.h"
 
@@ -96,7 +96,7 @@ protected:
 static TAutoConsoleVariable<bool> CDrawDebugInteractedLine(TEXT("IES.Interact.ShowInteractTrace"), false, TEXT("Enable draw debug interact"), ECVF_Cheat);
 
 UCLASS(Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent), HideCategories = ("Component", "Sockets", "Collision", "AssetUserData", "Component Tick", "ComponentTick", "Component Replication", "ComponentReplication", "Cooking", "Activation", "Variable"))
-class INTERACTSYSTEM_API UBaseInteractManager : public UBaseInventoryComponent
+class INTERACTSYSTEM_API UBaseInteractManager : public UCoreInventoryComponent
 {
 	GENERATED_BODY()
 

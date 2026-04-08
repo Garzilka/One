@@ -20,12 +20,12 @@
 
  #include "InventoryEcosystem/01_Core/Library/InventoryCoreLogTools.h"
 
-#include "BaseInventoryObject.generated.h"
+#include "CoreInventoryObject.generated.h"
 
 #define LOG_BIO(type, text) UInventoryCoreLogTools::LOG(GetOwner(), this, type, text, __LINE__, __FUNCTION__)
 
 UCLASS()
-class INVENTORYCORE_API UBaseInventoryObject : public UObject
+class INVENTORYCORE_API UCoreInventoryObject : public UObject
 {
 	GENERATED_BODY()
 

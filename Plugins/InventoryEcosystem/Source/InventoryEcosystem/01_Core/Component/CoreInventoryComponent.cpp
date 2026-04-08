@@ -1,13 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "BaseInventorySceneComponent.h"
-
+#include "CoreInventoryComponent.h"
 
 
 #pragma region ENGINE
 
-UBaseInventorySceneComponent::UBaseInventorySceneComponent()
+UCoreInventoryComponent::UCoreInventoryComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
@@ -17,12 +16,12 @@ UBaseInventorySceneComponent::UBaseInventorySceneComponent()
 
 #pragma region TOOLS
 
-bool UBaseInventorySceneComponent::IsLocallyControlled()
+bool UCoreInventoryComponent::IsLocallyControlled()
 {
 	return (GetOwningPlayerCharacter() && GetOwningPlayerCharacter()->IsLocallyControlled());
 }
 
-bool UBaseInventorySceneComponent::IsLocallySpectator()
+bool UCoreInventoryComponent::IsLocallySpectator()
 {
 	if (!IsValid(GetWorld())) return false;
 	APlayerController* LPC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -35,7 +34,7 @@ bool UBaseInventorySceneComponent::IsLocallySpectator()
 	return false;
 }
 
-ACharacter* UBaseInventorySceneComponent::GetOwningPlayerCharacter()
+ACharacter* UCoreInventoryComponent::GetOwningPlayerCharacter()
 {
 	if (IsValid(CharacterOwner)) return CharacterOwner;
 
@@ -47,7 +46,7 @@ ACharacter* UBaseInventorySceneComponent::GetOwningPlayerCharacter()
 	return CharacterOwner;
 }
 
-APlayerController* UBaseInventorySceneComponent::GetOwningPlayerController()
+APlayerController* UCoreInventoryComponent::GetOwningPlayerController()
 {
 	if (IsValid(ControllerOwner)) return ControllerOwner;
 
@@ -61,7 +60,7 @@ APlayerController* UBaseInventorySceneComponent::GetOwningPlayerController()
 	return ControllerOwner;
 }
 
-void UBaseInventorySceneComponent::ChangeObjectOuter(UObject* Object, AActor* InNewOuter)
+void UCoreInventoryComponent::ChangeObjectOuter(UObject* Object, AActor* InNewOuter)
 {
 	if (!(Object && InNewOuter && InNewOuter->HasAuthority())) return;
 	if (InNewOuter == Object->GetOuter()) return;
@@ -69,3 +68,4 @@ void UBaseInventorySceneComponent::ChangeObjectOuter(UObject* Object, AActor* In
 }
 
 #pragma endregion TOOLS
+

@@ -1,19 +1,19 @@
-#include "BaseInventoryObject.h"
+#include "CoreInventoryObject.h"
 #include "InventoryEcosystem/01_Core/Interface/ObjectManagmentInterface.h"
 #include "InventoryEcosystem/01_Core/Library/InventoryCoreLibrary.h"
 
 
 #pragma region ENGINE
 
-void UBaseInventoryObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void UCoreInventoryObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UBaseInventoryObject, RepOuter);
-	DOREPLIFETIME(UBaseInventoryObject, ParrentObject);
+	DOREPLIFETIME(UCoreInventoryObject, RepOuter);
+	DOREPLIFETIME(UCoreInventoryObject, ParrentObject);
 }
 
-bool UBaseInventoryObject::CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack)
+bool UCoreInventoryObject::CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack)
 {
 	if (!GetOwner()) return false;
 	
@@ -24,7 +24,7 @@ bool UBaseInventoryObject::CallRemoteFunction(UFunction* Function, void* Parms, 
 	return true;
 }
 
-int32 UBaseInventoryObject::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
+int32 UCoreInventoryObject::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
 {
 	return (GetOuter() ? GetOuter()->GetFunctionCallspace(Function, Stack) : FunctionCallspace::Local);
 }
@@ -33,7 +33,7 @@ int32 UBaseInventoryObject::GetFunctionCallspace(UFunction* Function, FFrame* St
 
 #pragma region RENAME 
 
-bool UBaseInventoryObject::Rename(const TCHAR* NewName, UObject* NewOuter, ERenameFlags Flags)
+bool UCoreInventoryObject::Rename(const TCHAR* NewName, UObject* NewOuter, ERenameFlags Flags)
 {
 	CharacterOwner = nullptr;
 	ControllerOwner = nullptr;
@@ -45,7 +45,7 @@ bool UBaseInventoryObject::Rename(const TCHAR* NewName, UObject* NewOuter, ERena
 	return Super::Rename(NewName, NewOuter, Flags);
 }
 
-void UBaseInventoryObject::OnRep_Outer()
+void UCoreInventoryObject::OnRep_Outer()
 {
 	if (RepOuter == nullptr) return;
 
@@ -59,7 +59,7 @@ void UBaseInventoryObject::OnRep_Outer()
 
 #pragma region TOOLS
 
-AActor* UBaseInventoryObject::GetOwner()
+AActor* UCoreInventoryObject::GetOwner()
 {
 	if (Owner != GetOuter())
 	{
@@ -68,7 +68,7 @@ AActor* UBaseInventoryObject::GetOwner()
 	return Owner;
 }
 
-APlayerController* UBaseInventoryObject::GetOwningPlayer()
+APlayerController* UCoreInventoryObject::GetOwningPlayer()
 {
 	if (IsValid(ControllerOwner)) return ControllerOwner;
 
@@ -82,7 +82,7 @@ APlayerController* UBaseInventoryObject::GetOwningPlayer()
 	return ControllerOwner;
 }
 
-ACharacter* UBaseInventoryObject::GetOwningPlayerCharacter()
+ACharacter* UCoreInventoryObject::GetOwningPlayerCharacter()
 {
 	if (IsValid(CharacterOwner)) return CharacterOwner;
 
@@ -94,7 +94,7 @@ ACharacter* UBaseInventoryObject::GetOwningPlayerCharacter()
 	return CharacterOwner;
 }
 
-bool UBaseInventoryObject::SwitchParrent(UObject* NewParrent)
+bool UCoreInventoryObject::SwitchParrent(UObject* NewParrent)
 {
 	if (IsParrentEqual(NewParrent)) return true;
 	if (ParrentObject)
@@ -130,7 +130,7 @@ bool UBaseInventoryObject::SwitchParrent(UObject* NewParrent)
 	return true;
 }
 
-bool UBaseInventoryObject::RemoveFromParrent()
+bool UCoreInventoryObject::RemoveFromParrent()
 {
 	if (ParrentObject)
 	{
@@ -153,7 +153,7 @@ bool UBaseInventoryObject::RemoveFromParrent()
 	return true;
 }
 
-bool UBaseInventoryObject::IsCanRemoveFromParrent()
+bool UCoreInventoryObject::IsCanRemoveFromParrent()
 {
 	if (!ParrentObject) return true;
 	if (ParrentObject)
@@ -169,7 +169,7 @@ bool UBaseInventoryObject::IsCanRemoveFromParrent()
 	return false;
 }
 
-void UBaseInventoryObject::ChangeOwner(AActor* InNewOuter)
+void UCoreInventoryObject::ChangeOwner(AActor* InNewOuter)
 {
 	if (!(IsValid(InNewOuter) && InNewOuter->HasAuthority())) return;
 	if (InNewOuter == GetOuter())

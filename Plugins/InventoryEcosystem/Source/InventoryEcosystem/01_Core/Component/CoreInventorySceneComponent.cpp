@@ -1,12 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "BaseInventoryComponent.h"
+#include "CoreInventorySceneComponent.h"
+
 
 
 #pragma region ENGINE
 
-UBaseInventoryComponent::UBaseInventoryComponent()
+UCoreInventorySceneComponent::UCoreInventorySceneComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
@@ -16,12 +17,12 @@ UBaseInventoryComponent::UBaseInventoryComponent()
 
 #pragma region TOOLS
 
-bool UBaseInventoryComponent::IsLocallyControlled()
+bool UCoreInventorySceneComponent::IsLocallyControlled()
 {
 	return (GetOwningPlayerCharacter() && GetOwningPlayerCharacter()->IsLocallyControlled());
 }
 
-bool UBaseInventoryComponent::IsLocallySpectator()
+bool UCoreInventorySceneComponent::IsLocallySpectator()
 {
 	if (!IsValid(GetWorld())) return false;
 	APlayerController* LPC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -34,7 +35,7 @@ bool UBaseInventoryComponent::IsLocallySpectator()
 	return false;
 }
 
-ACharacter* UBaseInventoryComponent::GetOwningPlayerCharacter()
+ACharacter* UCoreInventorySceneComponent::GetOwningPlayerCharacter()
 {
 	if (IsValid(CharacterOwner)) return CharacterOwner;
 
@@ -46,7 +47,7 @@ ACharacter* UBaseInventoryComponent::GetOwningPlayerCharacter()
 	return CharacterOwner;
 }
 
-APlayerController* UBaseInventoryComponent::GetOwningPlayerController()
+APlayerController* UCoreInventorySceneComponent::GetOwningPlayerController()
 {
 	if (IsValid(ControllerOwner)) return ControllerOwner;
 
@@ -60,7 +61,7 @@ APlayerController* UBaseInventoryComponent::GetOwningPlayerController()
 	return ControllerOwner;
 }
 
-void UBaseInventoryComponent::ChangeObjectOuter(UObject* Object, AActor* InNewOuter)
+void UCoreInventorySceneComponent::ChangeObjectOuter(UObject* Object, AActor* InNewOuter)
 {
 	if (!(Object && InNewOuter && InNewOuter->HasAuthority())) return;
 	if (InNewOuter == Object->GetOuter()) return;
@@ -68,4 +69,3 @@ void UBaseInventoryComponent::ChangeObjectOuter(UObject* Object, AActor* InNewOu
 }
 
 #pragma endregion TOOLS
-

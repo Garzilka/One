@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AssetTypeCategories.h"
 #include "Modules/ModuleManager.h"
 
 class FInventoryEcosystemEditorModule : public IModuleInterface
@@ -10,6 +11,8 @@ class FInventoryEcosystemEditorModule : public IModuleInterface
 public:
 
 	/** IModuleInterface implementation */
-	virtual void StartupModule() override;
+	virtual void StartupModule() override;	
 	virtual void ShutdownModule() override;
+	
+	static EAssetTypeCategories::Type InventoryEcosystemCategory;
 };

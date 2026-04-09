@@ -44,7 +44,8 @@ public class InventoryEcosystemEditor : ModuleRules
 				        "EditorStyle",
 				        "UMG",
 				        "Projects", 
-				        "InteractSystem",
+				        "InteractSystem", 
+				        "LootSystem",
         				// ... add private dependencies that you statically link with here ...	
         			}
         		);

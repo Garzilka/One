@@ -36,6 +36,16 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "InventorySystem",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "LootSystem",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "InventoryEcosystemEditor",
 			"Type": "Editor"
 		}
